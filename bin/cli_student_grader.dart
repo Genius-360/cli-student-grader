@@ -472,3 +472,316 @@ void addComment(List<Map<String, dynamic>> students) {
 
   print('✅ Comment saved. Preview: $display');
 }
+
+import 'dart:io';
+
+const String appTitle = 'Student Grader v1.0';
+final Set<String> availableSubjects = {'Math', 'English', 'Science', 'History'};
+
+void main() {
+  var students = <Map<String, dynamic>>[];
+  var choice = '';
+
+  do {
+    print('''
+===== $appTitle =====
+
+1. Add Student
+2. Record Score
+3. Add Bonus Points
+4. Add Comment
+5. View All Students
+6. View Report Card
+7. Class Summary
+8. Exit
+
+Choose an option:''');
+
+    choice = stdin.readLineSync() ?? '';
+
+    switch (choice) {
+      case '1':
+        addStudent(students);
+        break;
+      case '2':
+        recordScore(students);
+        break;
+      case '3':
+        addBonusPoints(students);
+        break;
+      case '4':
+        addComment(students);
+        break;
+      case '5':
+        viewAllStudents(students); // ← now wired up
+        break;
+      case '6':
+        viewReportCard(students);  // ← now wired up
+        break;
+      case '7':
+        print('Coming soon: Class Summary');
+        break;
+      case '8':
+        print('Goodbye! See you next time.');
+        break;
+      default:
+        print('Invalid option. Please choose 1–8.');
+    }
+  } while (choice != '8');
+}
+
+// ── OPTION 1: Add Student ──────────────────────────
+void addStudent(List<Map<String, dynamic>> students) {
+  print('\nEnter student name:');
+  var name = stdin.readLineSync() ?? '';
+
+  if (name.isEmpty) {
+    print('Name cannot be empty.');
+    return;
+  }
+
+  var student = <String, dynamic>{
+    'name': name,
+    'scores': <int>[],
+    'subjects': {...availableSubjects},
+    'bonus': null,
+    'comment': null,
+  };
+
+  students.add(student);
+  print('✅ Student "$name" has been added!');
+}
+
+// ── OPTION 2: Record Score ─────────────────────────
+void recordScore(List<Map<String, dynamic>> students) {
+  if (students.isEmpty) {
+    print('No students yet. Add a student first.');
+    return;
+  }
+
+  print('\nSelect a student:');
+  for (int i = 0; i < students.length; i++) {
+    print('${i + 1}. ${students[i]["name"]}');
+  }
+
+  print('Enter student number:');
+  var input = stdin.readLineSync() ?? '';
+  var index = int.tryParse(input);
+
+  if (index == null || index < 1 || index > students.length) {
+    print('Invalid selection.');
+    return;
+  }
+
+  var student = students[index - 1];
+
+  print('Available subjects: ${student["subjects"]}');
+  print('Enter subject name:');
+  stdin.readLineSync();
+
+  var score = -1;
+  while (score < 0 || score > 100) {
+    print('Enter score (0–100):');
+    var scoreInput = stdin.readLineSync() ?? '';
+    score = int.tryParse(scoreInput) ?? -1;
+
+    if (score < 0 || score > 100) {
+      print('❌ Score must be between 0 and 100. Try again.');
+    }
+  }
+
+  (student['scores'] as List<int>).add(score);
+  print('✅ Score $score recorded for ${student["name"]}!');
+}
+
+// ── OPTION 3: Add Bonus Points ─────────────────────
+void addBonusPoints(List<Map<String, dynamic>> students) {
+  if (students.isEmpty) {
+    print('No students yet. Add a student first.');
+    return;
+  }
+
+  print('\nSelect a student:');
+  for (int i = 0; i < students.length; i++) {
+    print('${i + 1}. ${students[i]["name"]}');
+  }
+
+  print('Enter student number:');
+  var input = stdin.readLineSync() ?? '';
+  var index = int.tryParse(input);
+
+  if (index == null || index < 1 || index > students.length) {
+    print('Invalid selection.');
+    return;
+  }
+
+  var student = students[index - 1];
+
+  print('Enter bonus points (1–10):');
+  var bonusInput = stdin.readLineSync() ?? '';
+  var bonusValue = int.tryParse(bonusInput);
+
+  if (bonusValue == null || bonusValue < 1 || bonusValue > 10) {
+    print('Invalid bonus. Must be 1–10.');
+    return;
+  }
+
+  if (student['bonus'] != null) {
+    print('⚠️  Bonus already set to ${student["bonus"]} for ${student["name"]}. Cannot overwrite.');
+  } else {
+    student['bonus'] ??= bonusValue;
+    print('✅ Bonus of $bonusValue points added to ${student["name"]}!');
+  }
+}
+
+// ── OPTION 4: Add Comment ──────────────────────────
+void addComment(List<Map<String, dynamic>> students) {
+  if (students.isEmpty) {
+    print('No students yet. Add a student first.');
+    return;
+  }
+
+  print('\nSelect a student:');
+  for (int i = 0; i < students.length; i++) {
+    print('${i + 1}. ${students[i]["name"]}');
+  }
+
+  print('Enter student number:');
+  var input = stdin.readLineSync() ?? '';
+  var index = int.tryParse(input);
+
+  if (index == null || index < 1 || index > students.length) {
+    print('Invalid selection.');
+    return;
+  }
+
+  var student = students[index - 1];
+
+  print('Enter comment:');
+  String? comment = stdin.readLineSync();
+  student['comment'] = comment;
+
+  String display =
+      (student['comment'] as String?)?.toUpperCase() ?? 'No comment provided';
+
+  print('✅ Comment saved. Preview: $display');
+}
+
+// ── OPTION 5: View All Students ───────────────────
+void viewAllStudents(List<Map<String, dynamic>> students) {
+  if (students.isEmpty) {
+    print('No students yet. Add a student first.');
+    return;
+  }
+
+  print('\n===== ALL STUDENTS =====');
+
+  // 16. for-in loop – iterate over all students
+  for (var student in students) {
+    var scores = student['scores'] as List<int>;
+
+    // 22. Collection if – conditionally add bonus tag
+    var tags = [
+      '${student["name"]}',
+      '${scores.length} score(s)',
+      if (student['bonus'] != null) '⭐ Has Bonus',
+    ];
+
+    print('→ ${tags.join(" | ")}');
+  }
+
+  print('========================\n');
+}
+
+// ── HELPER: Calculate average ──────────────────────
+double calculateAvg(Map<String, dynamic> student) {
+  var scores = student['scores'] as List<int>;
+  if (scores.isEmpty) return 0.0;
+
+  // 8. Arithmetic operators – sum then divide
+  var sum = 0;
+  for (var s in scores) {
+    sum += s;
+  }
+
+  var rawAvg = sum / scores.length;
+
+  // 5. ?? – use 0 if bonus is null
+  var finalAvg = rawAvg + (student['bonus'] ?? 0);
+
+  // 9. Relational – cap at 100
+  if (finalAvg > 100) finalAvg = 100;
+
+  return finalAvg;
+}
+
+// ── OPTION 6: View Report Card ────────────────────
+void viewReportCard(List<Map<String, dynamic>> students) {
+  if (students.isEmpty) {
+    print('No students yet. Add a student first.');
+    return;
+  }
+
+  print('\nSelect a student:');
+  for (int i = 0; i < students.length; i++) {
+    print('${i + 1}. ${students[i]["name"]}');
+  }
+
+  print('Enter student number:');
+  var input = stdin.readLineSync() ?? '';
+  var index = int.tryParse(input);
+
+  if (index == null || index < 1 || index > students.length) {
+    print('Invalid selection.');
+    return;
+  }
+
+  var student = students[index - 1];
+  var scores = student['scores'] as List<int>;
+  var finalAvg = calculateAvg(student);
+
+  // 13. if / else if / else + 9. Relational – grade assignment
+  String grade;
+  if (finalAvg >= 90) {
+    grade = 'A';
+  } else if (finalAvg >= 80) {
+    grade = 'B';
+  } else if (finalAvg >= 70) {
+    grade = 'C';
+  } else if (finalAvg >= 60) {
+    grade = 'D';
+  } else {
+    grade = 'F';
+  }
+
+  // 14. switch expression – feedback line with pattern matching
+  String feedback = switch (grade) {
+    'A' => 'Outstanding performance!',
+    'B' => 'Good work, keep it up!',
+    'C' => 'Satisfactory. Room to improve.',
+    'D' => 'Needs improvement.',
+    'F' => 'Failing. Please seek help.',
+    _   => 'Unknown grade.',
+  };
+
+  // 7. ?. + 5. ?? – safe comment display
+  String comment =
+      (student['comment'] as String?)?.toUpperCase() ?? 'No comment provided';
+
+  var bonusDisplay = student['bonus'] != null ? '+${student["bonus"]}' : 'None';
+
+  // 12. Multi-line string + 11. String interpolation – report card output
+  print('''
++--------------------------------+
+|          REPORT CARD           |
++--------------------------------+
+| Name:    ${student["name"].toString().padRight(21)}|
+| Scores:  ${scores.toString().padRight(21)}|
+| Bonus:   ${bonusDisplay.padRight(21)}|
+| Average: ${finalAvg.toStringAsFixed(1).padRight(21)}|
+| Grade:   ${grade.padRight(21)}|
+| Comment: ${comment.padRight(21)}|
++--------------------------------+
+📝 Feedback: $feedback
+''');
+}
